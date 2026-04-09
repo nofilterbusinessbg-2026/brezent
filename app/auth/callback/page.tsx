@@ -21,6 +21,20 @@ export default function AuthCallbackPage() {
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
+        } else {
+          // Invite / recovery links often arrive with tokens in the URL hash (#access_token=...).
+          const hash = typeof window !== "undefined" ? window.location.hash : "";
+          const params = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+          const accessToken = params.get("access_token");
+          const refreshToken = params.get("refresh_token");
+          if (!accessToken || !refreshToken) {
+            throw new Error("Линкът за покана е невалиден или е изтекъл.");
+          }
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
         }
 
         if (cancelled) return;
