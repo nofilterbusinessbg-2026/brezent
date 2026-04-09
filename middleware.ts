@@ -16,6 +16,12 @@ export function middleware(req: NextRequest) {
   // If not configured, do nothing.
   if (!user || !pass) return NextResponse.next();
 
+  // Allow the invite endpoint without Basic Auth.
+  // It is still protected by Supabase auth (owner-only) inside the route handler.
+  if (req.nextUrl.pathname === "/api/admin/invite") {
+    return NextResponse.next();
+  }
+
   const auth = req.headers.get("authorization") ?? "";
   const [scheme, encoded] = auth.split(" ");
   if (scheme !== "Basic" || !encoded) return unauthorized();
