@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Menu, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/types";
@@ -38,6 +38,11 @@ export function Navbar({ role, email }: { role: UserRole; email: string }) {
     [role]
   );
 
+  useEffect(() => {
+    // Prefetch main sections to speed up navigation.
+    items.forEach((i) => router.prefetch(i.href));
+  }, [items, router]);
+
   async function onLogout() {
     const supabase = createClient();
     const { error } = await supabase.auth.signOut();
@@ -66,6 +71,7 @@ export function Navbar({ role, email }: { role: UserRole; email: string }) {
                 <Link
                   key={i.href}
                   href={i.href}
+                  prefetch
                   className={[
                     "rounded-md px-3 py-1.5 text-sm transition-colors",
                     active
@@ -111,9 +117,10 @@ export function Navbar({ role, email }: { role: UserRole; email: string }) {
               {items.map((i) => (
                 <DropdownMenuItem
                   key={i.href}
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    router.push(i.href);
+                  onClick={() => {
+                    setOpen(false);
+                    // Let the menu close before navigation (better on mobile)
+                    setTimeout(() => router.push(i.href), 0);
                   }}
                 >
                   {i.label}
@@ -121,8 +128,8 @@ export function Navbar({ role, email }: { role: UserRole; email: string }) {
               ))}
               <Separator />
               <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault();
+                onClick={() => {
+                  setOpen(false);
                   void onLogout();
                 }}
               >
