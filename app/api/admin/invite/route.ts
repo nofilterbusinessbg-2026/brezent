@@ -38,8 +38,14 @@ export async function POST(req: Request) {
 
   const admin = createAdminClient();
 
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "https://brezent-financial-dashboard.vercel.app";
+
   const { data: invited, error: inviteError } =
-    await admin.auth.admin.inviteUserByEmail(email);
+    await admin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${baseUrl}/auth/callback?type=invite`,
+    });
 
   if (inviteError) {
     return NextResponse.json({ error: inviteError.message }, { status: 400 });
